@@ -1,26 +1,16 @@
-const Joi = require("joi");
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-
-const Customer = mongoose.model(
-  "Customer",
-  new mongoose.Schema({
-    isGold: boolean,
-    name: { type: String, required: true, minlength: 5, maxlength: 50 },
-    phone: number,
-  })
-);
+const { Customer, validate } = require("../models/customer"); //.Customer
 
 router.get("/", async (req, res) => {
   const customer = await Customer.find().sort("name");
-  if (!customer) return res.status(404).send("the customer can not be found");
   res.send(customer);
 });
 
 router.post("/", async (req, res) => {
   // validating name
-  const { error } = validateCustomer(req.body);
+  const { error } = validate(req.body);
   if (error) return res.status(400).send(result.error.details[0].message);
 
   let customer = new Customer({
@@ -32,4 +22,32 @@ router.post("/", async (req, res) => {
   res.send(customer);
 });
 
-router.put("/:id");
+router.put("/:id", async (req, res) => {
+  // validate
+  const { error } = validate(req.body);
+  if (error) return res.status(400).send(result.errror.details[0].message);
+  // find and update
+  const customer = await Customer.findByIdAndUpdate(req.params.id, {
+    name: req.body.name,
+  });
+  if (!customer)
+    return res.status(404).send("Customer with the given id was not found");
+
+  res.send(customer);
+});
+
+router.delete("/", async (req, res) => {
+  // validate
+  const { error } = validate(req.body);
+  if (error) return res.status(400).send(result.errror.details[0].message);
+  const customer = await Customer.findByIdAndRemove(req.params.id, {
+    name: req.body.name,
+  });
+
+  //delete
+
+  //return same customer
+  res.send(customer);
+});
+
+module.exports = router;
